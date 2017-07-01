@@ -126,6 +126,9 @@ ggsave("grazers.zmbio2015.jpg", plot = grazers.zmbio, width = 7, height = 3)
 
 View(Hakai)
 
+
+
+#### below here is some analysis from god knows when (old), but I didn't delete it because it does relate the data to abiotic variables.
 #Read in datafile
 seagrass=read.csv("./data/hakaigrazer.csv")
 seagrass <- seagrass[,-(53:62)]
