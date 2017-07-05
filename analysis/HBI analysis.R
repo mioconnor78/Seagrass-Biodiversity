@@ -4,12 +4,26 @@ library(tidyverse)
 library(ggplot2)
 
 ### Shoot data
+shoot.density2014 <- read.csv("./data/2014_Shoot_density_plot.csv")
+shoot.biomass2014 <- read.csv("./data/2014_macro_plot_biomass_MV.csv")
+grazers2014 <- read.csv("./data/2014hakaigrazer.csv")
 shoots2015 <- read.csv("./data/biodiversitysurvey.2015.eelgrass.quadrat.csv")
 grazers2015 <- read.csv("./data/biodiversitysurvey.2015.grazers.quadrat.csv")
-View(shoots2015)
+
+View(shoot.density2014)
+View(shoot.biomass2014)
 
 ### data processing
-Hakai <- shoots2015 %>%
+## standardize site codes
+shoot.density2014$site_id <- revalue(shoot.density2014$site_id, c("GE"="GsE", "GW"="GsW", "MN" = "MMn", "MS" = "MMs", "TB" = "TqB", "TN"= "Tqn", "CL" = "Clow"))
+shoot.biomass2014$site_id <- revalue(shoot.biomass2014$site_id, c("GE"="GsE", "GW"="GsW", "MN" = "MMn", "MS" = "MMs", "TB" = "TqB", "NT"= "TqN", "LC" = "Clow", "SC" = "Csan"))
+grazers2014$Site <- revalue(grazers2014$Site, c("choked"="Csan", "goose"="GsW", "goose.east"="GsE","mcmullin" = "MMs", "mcmullin.north" = "MMn", "triquet.noname.cove" = "TqB", "triquet"= "TqN", "lower.choked" = "Clow"))
+
+View(shoot.biomass2014)
+View(shoot.density2014)
+View(grazers2014)
+
+shoots2015 <- shoots2015 %>%
   filter(Region == "Hakai") %>%
   rename(density = X..of.shoots.in.quadrat) %>%
   rename(Zdrywt = total.dry.weight) %>%
@@ -17,11 +31,24 @@ Hakai <- shoots2015 %>%
   mutate(meZ = macroepiphyte / Zdrywt) %>%
   mutate(microZ = microepiphyte / Zdrywt)
 
-View(Hakai)
+shoots2014 <- shoot.density2014 %>%
+  select(site_id, sample, density, epi_bag_no)
 
+shoots2014bio <- shoot.biomass2014 %>%
+  select(site_id, sample_loc, sample_id, final_dry_wgt_kg)
+
+shoots2014total <- shoots2014bio %>%
+  mutate(site_sample = paste(site_id, sample_loc, sep = ".")) %>%
+  group_by(site_sample) %>%
+  select(-c(sample_id, site_id, sample_loc)) %>%
+  summarise_each(funs(sum)) %>%
+  separate(site_sample, c("site_id", "sample_loc"), sep = "_") ## not working quite yet but close
+  
+## we want a total macro biomass row for each plot
+## then, we want grazers / macro and grazers / zostera; so that will require merging these two files with density and diversity of grazers from 2014.
 
 View(grazers2015)
-grazers <- grazers2015 %>%
+grazers2015 <- grazers2015 %>%
   mutate(site_sample = paste(Site_short, Sample, sep = ".")) %>%
   group_by(site_sample) %>%
   select(-(Site:size.class)) %>%
@@ -31,10 +58,10 @@ grazers <- grazers2015 %>%
 
 View(grazers)
 
-pooled <- inner_join(grazers, Hakai)
-View(pooled)
+pooled2015 <- inner_join(grazers, Hakai)
+View(pooled2015)
 
-pooled <- pooled %>%
+pooled2015 <- pooled2015 %>%
   mutate(grazers.zmshoot = total.grazers / density) %>%
   mutate(grazers.zmbio = total.grazers / Zdrywt)
 
@@ -88,7 +115,7 @@ Micro.epi.Z
 ggsave("Micro.epi.Z2015.jpg", plot = Micro.epi.Z, width = 7, height = 3)
 
 
-Grazer.density <- ggplot(pooled, aes(x = Site_short, y = total.grazers)) + 
+Grazer.density <- ggplot(pooled2015, aes(x = Site_short, y = total.grazers)) + 
   geom_point(size = 6, colour = "gray") +
   geom_boxplot(size = 1, fill = "transparent") + 
   scale_y_continuous(name = "Grazers (N/0.0625 m^2)") +
@@ -100,7 +127,7 @@ Grazer.density
 ggsave("Grazer.density2015.jpg", plot = Grazer.density, width = 7, height = 3)
 
 
-grazers.zmshoot <- ggplot(pooled, aes(x = Site_short, y = grazers.zmshoot)) + 
+grazers.zmshoot <- ggplot(pooled2015, aes(x = Site_short, y = grazers.zmshoot)) + 
   geom_point(size = 6, colour = "gray") +
   geom_boxplot(size = 1, fill = "transparent") + 
   scale_y_continuous(name = "Grazers/shoot (N/shoot)") +
@@ -113,7 +140,7 @@ ggsave("grazers.zmshoot2015.jpg", plot = grazers.zmshoot, width = 7, height = 3)
 
 
 
-grazers.zmbio <- ggplot(pooled, aes(x = Site_short, y = grazers.zmbio)) + 
+grazers.zmbio <- ggplot(pooled2015, aes(x = Site_short, y = grazers.zmbio)) + 
   geom_point(size = 6, colour = "gray") +
   geom_boxplot(size = 1, fill = "transparent") + 
   scale_y_continuous(name = "Grazers/Zm biomass (N/g)") +
