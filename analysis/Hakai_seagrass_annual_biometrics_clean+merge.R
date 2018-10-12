@@ -29,7 +29,7 @@ d14 <- NULL
 ##
 ##
 # quadrats
-q15 <- read.csv( "../Data/Seagrass+Epiphytes/Hakai_2015_eelgrass_quadrat.csv", 
+q15 <- read.csv( "../data/00_producers/Hakai_2015_eelgrass_quadrat.csv", 
                  stringsAsFactors = FALSE )
 q15 <- q15 %>%
   select( site, id=sample.ID, shoot.count=X..of.shoots.in.quadrat, biomass.quad=total.dry.weight, 
