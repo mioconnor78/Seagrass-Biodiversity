@@ -2,4 +2,5 @@
 .Rhistory
 .RData
 .Ruserdata
+*.csv
 # if you want to ignore file types, just type them here (e.g. *.csv)
